@@ -1,0 +1,36 @@
+{
+  "family": "transitbdg-migrate",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::879989086304:role/transitbdg-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::879989086304:role/transitbdg-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "migrate",
+      "image": "879989086304.dkr.ecr.ap-southeast-1.amazonaws.com/transitbdg-backend:latest",
+      "essential": true,
+      "command": ["node", "src/db/migrate.js"],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "DB_SSL", "value": "true" },
+        { "name": "AWS_REGION", "value": "ap-southeast-1" }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:ssm:ap-southeast-1:879989086304:parameter/transitbdg/DATABASE_URL"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/transitbdg-backend",
+          "awslogs-region": "ap-southeast-1",
+          "awslogs-stream-prefix": "migrate"
+        }
+      }
+    }
+  ]
+}
