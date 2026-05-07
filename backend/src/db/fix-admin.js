@@ -23,16 +23,20 @@ async function fixAdmin() {
     console.log('  Username: admin');
     console.log('  Password: admin123');
     
-    // Tambah pengumuman dummy
-    await client.query(`
-      INSERT INTO announcements (title, content, route_id, is_active, published_at)
-      VALUES 
-        ('Jadwal Operasional TMB Lebaran 2024', 'Selama libur Lebaran, TMB beroperasi pukul 05.00-22.00 WIB dengan frekuensi 15 menit sekali.', 1, true, NOW()),
-        ('Peningkatan Layanan Koridor 2', 'Mulai 1 Juni 2024, TMB Koridor 2 menambah armada baru untuk meningkatkan kenyamanan penumpang.', 2, true, NOW()),
-        ('Perbaikan Halte Dago', 'Halte Dago sedang dalam perbaikan. Penumpang dapat naik di halte terdekat.', NULL, true, NOW())
-      ON CONFLICT DO NOTHING
-    `);
-    console.log('✓ Dummy announcements added');
+    // Tambah pengumuman dummy hanya jika belum ada
+    const existingAnn = await client.query('SELECT COUNT(*) FROM announcements');
+    if (parseInt(existingAnn.rows[0].count) === 0) {
+      await client.query(`
+        INSERT INTO announcements (title, content, route_id, is_active, published_at)
+        VALUES 
+          ('Jadwal Operasional TMB Lebaran 2024', 'Selama libur Lebaran, TMB beroperasi pukul 05.00-22.00 WIB dengan frekuensi 15 menit sekali.', 1, true, NOW()),
+          ('Peningkatan Layanan Koridor 2', 'Mulai 1 Juni 2024, TMB Koridor 2 menambah armada baru untuk meningkatkan kenyamanan penumpang.', 2, true, NOW()),
+          ('Perbaikan Halte Dago', 'Halte Dago sedang dalam perbaikan. Penumpang dapat naik di halte terdekat.', NULL, true, NOW())
+      `);
+      console.log('✓ Dummy announcements added');
+    } else {
+      console.log('✓ Announcements already exist, skipping');
+    }
     
   } finally {
     client.release();
