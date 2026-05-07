@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <meta name="description" content="TransitBDG — Daftar rute dan pencarian halte transportasi publik Kota Bandung" />
+  <title>TransitBDG — Rute</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet.js CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/app.css" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    /* Autocomplete dropdown */
+    .autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+      box-shadow: var(--shadow-md);
+      z-index: 200;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .autocomplete-item {
+      padding: 0.625rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      transition: background 0.15s ease;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .search-input-wrapper {
+      position: relative;
+    }
+
+    .route-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+
+    .route-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .route-type-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .route-type-tmb {
+      background: rgba(0, 122, 255, 0.12);
+      color: var(--accent);
+    }
+
+    .route-type-angkot {
+      background: rgba(52, 199, 89, 0.12);
+      color: #34c759;
+    }
+
+    #map {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search-result-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.875rem 1.125rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar (diisi oleh app.js) ─────────────────────── -->
+  <nav id="navbar" aria-label="Navigasi utama"></nav>
+
+  <!-- ── Main Content ───────────────────────────────────── -->
+  <main class="container">
+
+    <h1 class="section-title" style="margin-top:1.5rem;">🗺️ Rute Transportasi</h1>
+
+    <!-- ── Pencarian Rute ──────────────────────────────── -->
+    <section aria-label="Pencarian rute" class="card mb-6">
+      <h2 style="font-size:1rem;font-weight:600;margin-bottom:1rem;color:var(--text-primary);">
+        🔍 Cari Rute
+      </h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;" class="search-grid">
+        <!-- Halte Asal -->
+        <div>
+          <label for="origin-input" style="font-size:0.8125rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:0.375rem;">
+            Halte Asal
+          </label>
+          <div class="search-input-wrapper">
+            <input
+              id="origin-input"
+              type="text"
+              placeholder="Ketik nama halte asal..."
+              autocomplete="off"
+              aria-label="Halte asal"
+              aria-autocomplete="list"
+              aria-controls="origin-dropdown"
+              style="width:100%;padding:0.625rem 0.875rem;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-secondary);color:var(--text-primary);font-size:0.875rem;font-family:inherit;outline:none;transition:border-color 0.2s ease;"
+              onfocus="this.style.borderColor='var(--accent)'"
+              onblur="this.style.borderColor='var(--border)'"
+            />
+            <div id="origin-dropdown" class="autocomplete-dropdown" role="listbox" aria-label="Saran halte asal" style="display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Halte Tujuan -->
+        <div>
+          <label for="destination-input" style="font-size:0.8125rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:0.375rem;">
+            Halte Tujuan
+          </label>
+          <div class="search-input-wrapper">
+            <input
+              id="destination-input"
+              type="text"
+              placeholder="Ketik nama halte tujuan..."
+              autocomplete="off"
+              aria-label="Halte tujuan"
+              aria-autocomplete="list"
+              aria-controls="destination-dropdown"
+              style="width:100%;padding:0.625rem 0.875rem;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-secondary);color:var(--text-primary);font-size:0.875rem;font-family:inherit;outline:none;transition:border-color 0.2s ease;"
+              onfocus="this.style.borderColor='var(--accent)'"
+              onblur="this.style.borderColor='var(--border)'"
+            />
+            <div id="destination-dropdown" class="autocomplete-dropdown" role="listbox" aria-label="Saran halte tujuan" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Validation message -->
+      <div id="search-validation" role="alert" style="display:none;margin-top:0.75rem;" aria-live="polite"></div>
+
+      <button
+        id="search-btn"
+        class="btn btn-primary"
+        style="margin-top:1rem;"
+        aria-label="Cari rute"
+      >
+        🔍 Cari Rute
+      </button>
+
+      <!-- Search Results -->
+      <div id="search-results" style="margin-top:1rem;" aria-live="polite"></div>
+    </section>
+
+    <!-- ── Peta Interaktif ─────────────────────────────── -->
+    <section aria-label="Peta rute" class="mb-6">
+      <h2 class="section-title">📍 Peta Rute</h2>
+      <div id="map" style="height:400px;" role="img" aria-label="Peta interaktif rute transportasi Bandung"></div>
+    </section>
+
+    <!-- ── Daftar Rute ─────────────────────────────────── -->
+    <section aria-label="Daftar rute" class="mb-8">
+      <h2 class="section-title">🚌 Daftar Rute</h2>
+      <div id="routes-list" aria-live="polite">
+        <!-- Diisi secara dinamis oleh JavaScript -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Loading Spinner ────────────────────────────────── -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-label="Memuat...">
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+
+  <!-- ── Toast Container ────────────────────────────────── -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <!-- Leaflet.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/routes.js"></script>
+
+</body>
+</html>

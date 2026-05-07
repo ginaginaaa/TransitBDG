@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <meta name="description" content="TransitBDG — Feed laporan publik kondisi transportasi Kota Bandung" />
+  <title>TransitBDG — Feed Laporan</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/app.css" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    /* ── Feed Card ───────────────────────────────────────── */
+    .feed-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.125rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+
+    .feed-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .feed-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .feed-card-meta {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      align-items: center;
+    }
+
+    .feed-card-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .feed-card-description {
+      font-size: 0.9375rem;
+      color: var(--text-primary);
+      line-height: 1.55;
+    }
+
+    .feed-card-photo {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Filter Section ──────────────────────────────────── */
+    .filter-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      margin-bottom: 1.25rem;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .filter-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .filter-select {
+      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e6e73' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    /* ── Feed List ───────────────────────────────────────── */
+    #feed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+
+    /* ── Category Badge Colors ───────────────────────────── */
+    .badge-kemacetan {
+      background: rgba(255, 159, 10, 0.14);
+      color: #ff9f0a;
+    }
+
+    .badge-kecelakaan {
+      background: rgba(255, 59, 48, 0.14);
+      color: #ff3b30;
+    }
+
+    .badge-kendaraan-rusak {
+      background: rgba(88, 86, 214, 0.14);
+      color: #5856d6;
+    }
+
+    .badge-angkot-ngetem {
+      background: rgba(52, 199, 89, 0.14);
+      color: #34c759;
+    }
+
+    .badge-halte-rusak {
+      background: rgba(0, 122, 255, 0.14);
+      color: #007aff;
+    }
+
+    /* ── Polling indicator ───────────────────────────────── */
+    .poll-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .poll-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.75); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar (diisi oleh app.js) ─────────────────────── -->
+  <nav id="navbar" aria-label="Navigasi utama"></nav>
+
+  <!-- ── Main Content ───────────────────────────────────── -->
+  <main class="container">
+
+    <!-- Page Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-top:1.5rem;margin-bottom:1rem;">
+      <div>
+        <h1 class="section-title" style="margin-bottom:0.25rem;">📋 Feed Laporan Publik</h1>
+        <p style="font-size:0.875rem;color:var(--text-secondary);">
+          Laporan aktif dari masyarakat mengenai kondisi transportasi Kota Bandung.
+        </p>
+      </div>
+      <div class="poll-indicator" aria-label="Pembaruan otomatis setiap 30 detik">
+        <span class="poll-dot" aria-hidden="true"></span>
+        <span>Diperbarui otomatis setiap 30 detik</span>
+      </div>
+    </div>
+
+    <!-- Alert Kemacetan -->
+    <section id="alerts-section" aria-label="Alert kemacetan" class="mb-4">
+      <!-- Diisi secara dinamis oleh feed.js -->
+    </section>
+
+    <!-- Filter Section -->
+    <section aria-label="Filter laporan">
+      <div class="filter-bar">
+        <!-- Filter Kategori -->
+        <div class="filter-group">
+          <label for="filter-category" class="filter-label">Kategori</label>
+          <select
+            id="filter-category"
+            class="filter-select"
+            aria-label="Filter berdasarkan kategori laporan"
+          >
+            <option value="">Semua Kategori</option>
+            <option value="Kemacetan">Kemacetan</option>
+            <option value="Kecelakaan">Kecelakaan</option>
+            <option value="Kendaraan Rusak">Kendaraan Rusak</option>
+            <option value="Angkot Ngetem">Angkot Ngetem</option>
+            <option value="Halte Rusak">Halte Rusak</option>
+          </select>
+        </div>
+
+        <!-- Filter Rute -->
+        <div class="filter-group">
+          <label for="filter-route" class="filter-label">Rute</label>
+          <select
+            id="filter-route"
+            class="filter-select"
+            aria-label="Filter berdasarkan rute terkait"
+          >
+            <option value="">Semua Rute</option>
+            <!-- Diisi secara dinamis oleh feed.js -->
+          </select>
+        </div>
+
+        <!-- Tombol Terapkan -->
+        <button
+          id="apply-filter-btn"
+          class="btn btn-primary"
+          style="flex-shrink:0;align-self:flex-end;"
+          aria-label="Terapkan filter laporan"
+        >
+          🔍 Terapkan Filter
+        </button>
+      </div>
+    </section>
+
+    <!-- Error Banner (disembunyikan secara default) -->
+    <div id="feed-error" role="alert" aria-live="polite" style="display:none;margin-bottom:1rem;"></div>
+
+    <!-- Feed List -->
+    <section aria-label="Daftar laporan">
+      <div id="feed-list" aria-live="polite" aria-atomic="false">
+        <!-- Diisi secara dinamis oleh feed.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Loading Spinner ────────────────────────────────── -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-label="Memuat...">
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+
+  <!-- ── Toast Container ────────────────────────────────── -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/feed.js"></script>
+
+</body>
+</html>

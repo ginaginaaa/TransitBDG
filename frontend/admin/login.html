@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <meta name="description" content="TransitBDG — Login Admin" />
+  <title>TransitBDG — Login Admin</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="../css/app.css" />
+
+  <style>
+    /* ── Login Page Layout ───────────────────────────────── */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: var(--bg);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .login-logo-icon {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-logo-title {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .login-logo-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Form Fields ─────────────────────────────────────── */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    /* ── Error Message ───────────────────────────────────── */
+    .login-error {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      background: rgba(255, 59, 48, 0.10);
+      border: 1px solid rgba(255, 59, 48, 0.25);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .login-error.visible {
+      display: flex;
+    }
+
+    /* ── Submit Button ───────────────────────────────────── */
+    .btn-login {
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.30);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-login:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.40);
+    }
+
+    .btn-login:active {
+      transform: scale(0.98);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Spinner inside button ───────────────────────────── */
+    .btn-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      display: none;
+    }
+
+    .btn-login.loading .btn-spinner {
+      display: block;
+    }
+
+    .btn-login.loading .btn-label {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-page">
+    <div class="login-card">
+
+      <!-- Logo & Title -->
+      <div class="login-logo">
+        <span class="login-logo-icon" aria-hidden="true">🚌</span>
+        <div class="login-logo-title">TransitBDG</div>
+        <div class="login-logo-subtitle">Panel Administrasi</div>
+      </div>
+
+      <!-- Error Message Area -->
+      <div
+        id="login-error"
+        class="login-error"
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span aria-hidden="true">⚠️</span>
+        <span id="login-error-text">Username atau password salah</span>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" novalidate aria-label="Formulir login admin">
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-input"
+            placeholder="Masukkan username"
+            autocomplete="username"
+            required
+            aria-required="true"
+            aria-describedby="login-error"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="Masukkan password"
+            autocomplete="current-password"
+            required
+            aria-required="true"
+            aria-describedby="login-error"
+          />
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          id="login-btn"
+          class="btn-login"
+          aria-label="Masuk ke panel admin"
+        >
+          <span class="btn-spinner" aria-hidden="true"></span>
+          <span class="btn-label">Masuk</span>
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <script src="../js/api.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/admin/auth.js"></script>
+
+</body>
+</html>

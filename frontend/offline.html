@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <title>TransitBDG — Offline</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- App CSS (CSS variables, dark mode, glassmorphism, components) -->
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+  <!-- ── Offline Page ────────────────────────────────────── -->
+  <main
+    class="container"
+    style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+      padding: 2rem;
+    "
+  >
+    <div
+      style="
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        line-height: 1;
+      "
+      aria-hidden="true"
+    >
+      🚌
+    </div>
+
+    <h1
+      style="
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: var(--text);
+      "
+    >
+      Anda sedang offline
+    </h1>
+
+    <p
+      style="
+        font-size: 1rem;
+        color: var(--text-muted);
+        max-width: 360px;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+      "
+    >
+      Tidak ada koneksi internet. Periksa koneksi Anda dan coba lagi untuk
+      mengakses informasi transportasi publik Kota Bandung.
+    </p>
+
+    <button
+      onclick="window.location.reload()"
+      class="btn btn-primary"
+      aria-label="Coba lagi memuat halaman"
+      style="min-width: 160px;"
+    >
+      🔄 Coba Lagi
+    </button>
+  </main>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>

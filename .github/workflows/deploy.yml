@@ -1,0 +1,75 @@
+name: Deploy to AWS ECS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  ECS_CLUSTER: transitbdg-cluster
+  BACKEND_SERVICE: transitbdg-backend
+  FRONTEND_SERVICE: transitbdg-frontend
+  BACKEND_ECR_REPOSITORY: transitbdg-backend
+  FRONTEND_ECR_REPOSITORY: transitbdg-frontend
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend Docker image
+        id: build-backend
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$BACKEND_ECR_REPOSITORY:latest \
+                       -t $ECR_REGISTRY/$BACKEND_ECR_REPOSITORY:$IMAGE_TAG \
+                       ./backend
+          docker push $ECR_REGISTRY/$BACKEND_ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$BACKEND_ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$BACKEND_ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push frontend Docker image
+        id: build-frontend
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$FRONTEND_ECR_REPOSITORY:latest \
+                       -t $ECR_REGISTRY/$FRONTEND_ECR_REPOSITORY:$IMAGE_TAG \
+                       ./frontend
+          docker push $ECR_REGISTRY/$FRONTEND_ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$FRONTEND_ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$FRONTEND_ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Update ECS service for backend
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $BACKEND_SERVICE \
+            --force-new-deployment \
+            --region $AWS_REGION
+
+      - name: Update ECS service for frontend
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $FRONTEND_SERVICE \
+            --force-new-deployment \
+            --region $AWS_REGION

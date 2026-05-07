@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <meta name="description" content="TransitBDG — Formulir laporan masalah transportasi publik Kota Bandung" />
+  <title>TransitBDG — Laporan</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet.js CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/app.css" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    /* ── Form Styles ─────────────────────────────────────── */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-label .required {
+      color: #ff3b30;
+      margin-left: 0.2rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .form-control.error {
+      border-color: #ff3b30;
+      box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.12);
+    }
+
+    select.form-control {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e6e73' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.875rem center;
+      padding-right: 2.25rem;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .field-error {
+      display: none;
+      font-size: 0.8125rem;
+      color: #ff3b30;
+      margin-top: 0.375rem;
+    }
+
+    .field-error.visible {
+      display: block;
+    }
+
+    .char-counter {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+
+    .char-counter.near-limit {
+      color: #ff9f0a;
+    }
+
+    .char-counter.at-limit {
+      color: #ff3b30;
+    }
+
+    /* ── Map ─────────────────────────────────────────────── */
+    #location-map {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      cursor: crosshair;
+    }
+
+    .map-hint {
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+      margin-top: 0.375rem;
+    }
+
+    /* ── File Input ──────────────────────────────────────── */
+    .file-input-wrapper {
+      position: relative;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Confirmation Section ────────────────────────────── */
+    #confirmation-section {
+      display: none;
+    }
+
+    .report-code-box {
+      background: var(--accent-light);
+      border: 1px solid rgba(0, 122, 255, 0.25);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .report-code-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar (diisi oleh app.js) ─────────────────────── -->
+  <nav id="navbar" aria-label="Navigasi utama"></nav>
+
+  <!-- ── Main Content ───────────────────────────────────── -->
+  <main class="container">
+
+    <h1 class="section-title" style="margin-top:1.5rem;">📝 Kirim Laporan</h1>
+    <p style="font-size:0.9375rem;color:var(--text-secondary);margin-bottom:1.5rem;">
+      Laporkan masalah transportasi publik di Kota Bandung. Laporan Anda akan membantu pengelola meningkatkan layanan.
+    </p>
+
+    <!-- ── Form Laporan ────────────────────────────────── -->
+    <section id="form-section" aria-label="Formulir laporan">
+      <form id="report-form" novalidate>
+        <div class="card">
+
+          <!-- Kategori -->
+          <div class="form-group">
+            <label for="category" class="form-label">
+              Kategori <span class="required" aria-hidden="true">*</span>
+            </label>
+            <select
+              id="category"
+              name="category"
+              class="form-control"
+              required
+              aria-required="true"
+              aria-describedby="category-error"
+            >
+              <option value="">-- Pilih Kategori --</option>
+              <option value="Kemacetan">Kemacetan</option>
+              <option value="Kecelakaan">Kecelakaan</option>
+              <option value="Kendaraan Rusak">Kendaraan Rusak</option>
+              <option value="Angkot Ngetem">Angkot Ngetem</option>
+              <option value="Halte Rusak">Halte Rusak</option>
+            </select>
+            <p id="category-error" class="field-error" role="alert" aria-live="polite"></p>
+          </div>
+
+          <!-- Deskripsi -->
+          <div class="form-group">
+            <label for="description" class="form-label">
+              Deskripsi <span class="required" aria-hidden="true">*</span>
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              class="form-control"
+              placeholder="Jelaskan masalah yang Anda temui secara singkat..."
+              maxlength="500"
+              required
+              aria-required="true"
+              aria-describedby="description-error description-counter"
+              rows="4"
+            ></textarea>
+            <p id="description-counter" class="char-counter" aria-live="polite">0 / 500</p>
+            <p id="description-error" class="field-error" role="alert" aria-live="polite"></p>
+          </div>
+
+          <!-- Peta Lokasi -->
+          <div class="form-group">
+            <label class="form-label">
+              Lokasi <span class="required" aria-hidden="true">*</span>
+            </label>
+            <div
+              id="location-map"
+              style="height:280px;"
+              role="application"
+              aria-label="Peta interaktif untuk memilih lokasi laporan. Klik pada peta untuk menempatkan penanda."
+            ></div>
+            <p class="map-hint">💡 Klik pada peta untuk menandai lokasi kejadian, atau isi kolom lokasi di bawah secara manual.</p>
+          </div>
+
+          <!-- Lokasi Teks -->
+          <div class="form-group">
+            <label for="location_text" class="form-label">
+              Keterangan Lokasi <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="location_text"
+              name="location_text"
+              type="text"
+              class="form-control"
+              placeholder="Contoh: Jl. Dago depan Gedung Sate, atau klik peta di atas"
+              aria-describedby="location-error"
+            />
+            <p id="location-error" class="field-error" role="alert" aria-live="polite"></p>
+          </div>
+
+          <!-- Rute Terkait (opsional) -->
+          <div class="form-group">
+            <label for="route_id" class="form-label">
+              Rute Terkait <span style="font-size:0.75rem;color:var(--text-tertiary);">(opsional)</span>
+            </label>
+            <select
+              id="route_id"
+              name="route_id"
+              class="form-control"
+              aria-label="Pilih rute terkait (opsional)"
+            >
+              <option value="">-- Pilih Rute (Opsional) --</option>
+            </select>
+          </div>
+
+          <!-- Foto (opsional) -->
+          <div class="form-group">
+            <label class="form-label">
+              Foto <span style="font-size:0.75rem;color:var(--text-tertiary);">(opsional, maks. 5 MB)</span>
+            </label>
+            <div class="file-input-wrapper">
+              <label class="file-input-label" for="photo" aria-label="Pilih foto laporan (JPEG atau PNG, maksimal 5 MB)">
+                <span aria-hidden="true">📷</span>
+                <span id="photo-label-text">Pilih foto (JPEG / PNG)</span>
+              </label>
+              <input
+                id="photo"
+                name="photo"
+                type="file"
+                accept="image/jpeg,image/png"
+                aria-describedby="photo-error"
+              />
+            </div>
+            <p id="photo-error" class="field-error" role="alert" aria-live="polite"></p>
+          </div>
+
+          <!-- Submit Button -->
+          <div style="margin-top:1.5rem;">
+            <button
+              id="submit-btn"
+              type="submit"
+              class="btn btn-primary"
+              style="width:100%;padding:0.75rem;"
+              aria-label="Kirim laporan"
+            >
+              📤 Kirim Laporan
+            </button>
+          </div>
+
+          <!-- API Error Banner -->
+          <div id="api-error" role="alert" aria-live="polite" style="display:none;margin-top:1rem;"></div>
+
+        </div>
+      </form>
+    </section>
+
+    <!-- ── Konfirmasi Berhasil ─────────────────────────── -->
+    <section id="confirmation-section" aria-label="Konfirmasi laporan berhasil dikirim">
+      <div class="card" style="text-align:center;padding:2rem;">
+        <div style="font-size:3rem;margin-bottom:0.75rem;" aria-hidden="true">✅</div>
+        <h2 style="font-size:1.25rem;font-weight:700;color:var(--text-primary);margin-bottom:0.5rem;">
+          Laporan Berhasil Dikirim!
+        </h2>
+        <p style="font-size:0.9375rem;color:var(--text-secondary);margin-bottom:0.25rem;">
+          Simpan kode laporan berikut untuk melacak status laporan Anda:
+        </p>
+        <div class="report-code-box">
+          <p style="font-size:0.8125rem;color:var(--text-secondary);margin-bottom:0.375rem;">Kode Laporan</p>
+          <p id="report-code-display" class="report-code-value" aria-live="polite">—</p>
+        </div>
+        <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.5rem;">
+          Gunakan kode di atas pada halaman <a href="track.html" style="color:var(--accent);">Pelacakan Laporan</a> untuk memantau perkembangan laporan Anda.
+        </p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+          <a href="track.html" class="btn btn-primary" aria-label="Lacak laporan">
+            🔍 Lacak Laporan
+          </a>
+          <button
+            id="new-report-btn"
+            class="btn btn-secondary"
+            aria-label="Kirim laporan baru"
+          >
+            📝 Laporan Baru
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Loading Spinner ────────────────────────────────── -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-label="Memuat...">
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+
+  <!-- ── Toast Container ────────────────────────────────── -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <!-- Leaflet.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/report.js"></script>
+
+</body>
+</html>

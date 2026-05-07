@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <meta name="description" content="TransitBDG — Lacak status laporan transportasi publik Kota Bandung" />
+  <title>TransitBDG — Lacak Laporan</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/app.css" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    /* ── Search Box ──────────────────────────────────────── */
+    .search-box {
+      display: flex;
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      letter-spacing: 0.02em;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-tertiary);
+      letter-spacing: 0;
+    }
+
+    /* ── Report Detail Card ──────────────────────────────── */
+    .detail-row {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+
+    .detail-value {
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      flex: 1;
+      word-break: break-word;
+    }
+
+    /* ── Status Progress ─────────────────────────────────── */
+    .status-progress {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 1.25rem 0 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+    }
+
+    .status-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 70px;
+      position: relative;
+    }
+
+    .status-step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      z-index: 1;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .status-step.active .status-step-dot {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .status-step.done .status-step-dot {
+      background: #34c759;
+      border-color: #34c759;
+      color: #ffffff;
+    }
+
+    .status-step.rejected .status-step-dot {
+      background: #ff3b30;
+      border-color: #ff3b30;
+      color: #ffffff;
+    }
+
+    .status-step-label {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-top: 0.375rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .status-step.active .status-step-label,
+    .status-step.done .status-step-label {
+      color: var(--text-primary);
+    }
+
+    .status-step.rejected .status-step-label {
+      color: #ff3b30;
+    }
+
+    .status-connector {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin-top: -14px; /* align with center of dot */
+      transition: background 0.2s ease;
+    }
+
+    .status-connector.filled {
+      background: #34c759;
+    }
+
+    /* ── Photo ───────────────────────────────────────────── */
+    .report-photo {
+      width: 100%;
+      max-height: 300px;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar (diisi oleh app.js) ─────────────────────── -->
+  <nav id="navbar" aria-label="Navigasi utama"></nav>
+
+  <!-- ── Main Content ───────────────────────────────────── -->
+  <main class="container">
+
+    <h1 class="section-title" style="margin-top:1.5rem;">🔍 Lacak Laporan</h1>
+    <p style="font-size:0.9375rem;color:var(--text-secondary);margin-bottom:1.5rem;">
+      Masukkan Kode Laporan yang Anda terima saat mengirimkan laporan untuk melihat status terkini.
+    </p>
+
+    <!-- ── Input Kode Laporan ──────────────────────────── -->
+    <section aria-label="Pencarian laporan" class="card mb-6">
+      <label for="track-input" style="font-size:0.875rem;font-weight:500;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">
+        Kode Laporan
+      </label>
+      <div class="search-box">
+        <input
+          id="track-input"
+          type="text"
+          class="search-input"
+          placeholder="Contoh: TBD-20240115-AB12"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          aria-label="Masukkan kode laporan"
+          aria-describedby="track-hint"
+        />
+        <button
+          id="track-btn"
+          class="btn btn-primary"
+          aria-label="Cari laporan"
+        >
+          🔍 Cari
+        </button>
+      </div>
+      <p id="track-hint" style="font-size:0.8125rem;color:var(--text-tertiary);margin-top:0.5rem;">
+        Kode laporan berformat <code style="font-family:monospace;background:var(--accent-light);padding:0.1rem 0.3rem;border-radius:4px;">TBD-YYYYMMDD-XXXX</code>
+      </p>
+    </section>
+
+    <!-- ── Hasil Pencarian ─────────────────────────────── -->
+    <div id="report-result" aria-live="polite" aria-atomic="true">
+      <!-- Diisi secara dinamis oleh JavaScript -->
+    </div>
+
+  </main>
+
+  <!-- ── Loading Spinner ────────────────────────────────── -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-label="Memuat...">
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+
+  <!-- ── Toast Container ────────────────────────────────── -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/track.js"></script>
+
+</body>
+</html>

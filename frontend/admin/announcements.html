@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#007AFF" />
+  <meta name="description" content="TransitBDG Admin — Pengelolaan Pengumuman" />
+  <title>TransitBDG Admin — Pengumuman</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="../css/app.css" />
+
+  <style>
+    /* ── Admin Navbar ─────────────────────────────────────── */
+    .admin-navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--navbar-height);
+      background: var(--bg-navbar);
+      backdrop-filter: var(--blur-glass);
+      -webkit-backdrop-filter: var(--blur-glass);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1.5rem;
+    }
+
+    /* ── Table ────────────────────────────────────────────── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--accent-light);
+    }
+
+    /* ── Table Card ───────────────────────────────────────── */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* ── Modal ────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(12px) scale(0.98);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.visible .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    /* ── Form ─────────────────────────────────────────────── */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      padding: 0.5625rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .form-input.error {
+      border-color: #ff3b30;
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .form-textarea.error {
+      border-color: #ff3b30;
+    }
+
+    .form-select {
+      padding: 0.5625rem 2rem 0.5625rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e6e73' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .form-error {
+      font-size: 0.75rem;
+      color: #ff3b30;
+      margin-top: 0.125rem;
+    }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn-sm {
+      padding: 0.3rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+
+    .btn-danger {
+      background: rgba(255, 59, 48, 0.15);
+      color: #ff3b30;
+      border: 1px solid rgba(255, 59, 48, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 59, 48, 0.25);
+    }
+
+    .btn-success {
+      background: rgba(52, 199, 89, 0.15);
+      color: #34c759;
+      border: 1px solid rgba(52, 199, 89, 0.3);
+    }
+
+    .btn-success:hover {
+      background: rgba(52, 199, 89, 0.25);
+    }
+
+    /* ── Active badge ─────────────────────────────────────── */
+    .badge-active {
+      background: rgba(52, 199, 89, 0.14);
+      color: #34c759;
+    }
+
+    .badge-inactive {
+      background: rgba(142, 142, 147, 0.14);
+      color: #8e8e93;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Admin Navbar ────────────────────────────────────── -->
+  <header class="admin-navbar" role="banner">
+    <span class="navbar-brand">🚌 TransitBDG Admin</span>
+    <nav class="navbar-links" aria-label="Navigasi admin">
+      <a href="dashboard.html" class="navbar-link">Dasbor</a>
+      <a href="reports.html" class="navbar-link">Laporan</a>
+      <a href="routes.html" class="navbar-link">Rute</a>
+      <a href="announcements.html" class="navbar-link active" aria-current="page">Pengumuman</a>
+    </nav>
+    <div class="navbar-actions">
+      <button
+        class="btn-icon"
+        onclick="toggleDarkMode()"
+        aria-label="Toggle dark mode"
+        title="Toggle dark mode"
+      >
+        <span class="dark-mode-icon-light" aria-hidden="true">🌙</span>
+        <span class="dark-mode-icon-dark"  aria-hidden="true">☀️</span>
+      </button>
+      <button
+        class="btn btn-secondary btn-sm"
+        onclick="adminLogout()"
+        aria-label="Keluar dari akun admin"
+      >
+        Keluar
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Main Content ───────────────────────────────────── -->
+  <main class="container" style="padding-top:1.5rem;padding-bottom:3rem;">
+
+    <!-- Page Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.25rem;">
+      <div>
+        <h1 class="section-title" style="margin-bottom:0.25rem;">📢 Pengelolaan Pengumuman</h1>
+        <p style="font-size:0.875rem;color:var(--text-secondary);">
+          Buat dan kelola pengumuman resmi untuk masyarakat.
+        </p>
+      </div>
+      <button
+        id="add-announcement-btn"
+        class="btn btn-primary"
+        aria-label="Tambah pengumuman baru"
+      >
+        + Tambah Pengumuman
+      </button>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="announcements-error" role="alert" aria-live="polite" style="display:none;margin-bottom:1rem;"></div>
+
+    <!-- Announcements Table -->
+    <section aria-label="Tabel pengumuman">
+      <div class="table-card">
+        <div style="overflow-x:auto;">
+          <table class="data-table" aria-label="Daftar pengumuman">
+            <thead>
+              <tr>
+                <th scope="col">Judul</th>
+                <th scope="col">Rute Terkait</th>
+                <th scope="col">Waktu Publikasi</th>
+                <th scope="col">Status Aktif</th>
+                <th scope="col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="announcements-tbody">
+              <tr>
+                <td colspan="5" class="empty-state">Memuat pengumuman...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Modal Create/Update Pengumuman ─────────────────── -->
+  <div
+    id="announcement-modal"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="announcement-modal-title"
+    aria-hidden="true"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="announcement-modal-title">Tambah Pengumuman</h2>
+        <button
+          class="btn-icon"
+          onclick="closeAnnouncementModal()"
+          aria-label="Tutup modal"
+        >✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="ann-title" class="form-label">Judul <span aria-hidden="true">*</span></label>
+          <input
+            type="text"
+            id="ann-title"
+            class="form-input"
+            placeholder="Judul pengumuman"
+            aria-required="true"
+            aria-describedby="ann-title-error"
+          />
+          <span id="ann-title-error" class="form-error" role="alert" style="display:none;"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="ann-content" class="form-label">Isi Pengumuman <span aria-hidden="true">*</span></label>
+          <textarea
+            id="ann-content"
+            class="form-textarea"
+            placeholder="Tulis isi pengumuman di sini..."
+            aria-required="true"
+            aria-describedby="ann-content-error"
+            rows="4"
+          ></textarea>
+          <span id="ann-content-error" class="form-error" role="alert" style="display:none;"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="ann-route" class="form-label">Rute Terkait <span style="color:var(--text-tertiary);font-weight:400;">(opsional)</span></label>
+          <select
+            id="ann-route"
+            class="form-select"
+            aria-label="Pilih rute terkait pengumuman"
+          >
+            <option value="">Tidak ada rute terkait</option>
+            <!-- Diisi secara dinamis -->
+          </select>
+        </div>
+
+        <!-- Error umum modal -->
+        <div id="ann-modal-error" role="alert" aria-live="polite" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button
+          class="btn btn-secondary"
+          onclick="closeAnnouncementModal()"
+          aria-label="Batal"
+        >Batal</button>
+        <button
+          id="save-announcement-btn"
+          class="btn btn-primary"
+          aria-label="Simpan pengumuman"
+        >Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading Spinner ────────────────────────────────── -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-label="Memuat...">
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+
+  <!-- ── Toast Container ────────────────────────────────── -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <script src="../js/api.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/admin/announcements.js"></script>
+
+</body>
+</html>

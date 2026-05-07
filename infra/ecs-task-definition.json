@@ -1,0 +1,83 @@
+{
+  "family": "transitbdg",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/transitbdg-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/transitbdg-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/transitbdg-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/transitbdg/DATABASE_URL"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/transitbdg/JWT_SECRET"
+        },
+        {
+          "name": "S3_BUCKET",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/transitbdg/S3_BUCKET"
+        },
+        {
+          "name": "CLOUDFRONT_URL",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/transitbdg/CLOUDFRONT_URL"
+        },
+        {
+          "name": "AWS_REGION",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/transitbdg/AWS_REGION"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/transitbdg-backend",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    },
+    {
+      "name": "frontend",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/transitbdg-frontend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/transitbdg-frontend",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

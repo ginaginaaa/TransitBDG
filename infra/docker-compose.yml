@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: transitbdg-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: transitbdg
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - transitbdg-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d transitbdg"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: transitbdg-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - transitbdg-network
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: transitbdg-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - transitbdg-network
+
+networks:
+  transitbdg-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
