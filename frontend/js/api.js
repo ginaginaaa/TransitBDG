@@ -4,7 +4,9 @@
  * Requirements: 9.4, 9.5
  */
 
-const API_BASE = 'http://localhost:3000';
+// Di production (ECS/ALB), backend dan frontend ada di host yang sama
+// ALB routing: /api/* → backend container, /* → frontend container
+const API_BASE = '';
 
 /**
  * Fetch wrapper yang secara otomatis:
