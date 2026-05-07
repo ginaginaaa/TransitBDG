@@ -80,6 +80,12 @@ function renderNavbar() {
       ${linksHTML}
     </nav>
     <div class="navbar-actions">
+      <a
+        href="/admin/login.html"
+        class="btn btn-secondary"
+        style="font-size:0.8125rem;padding:0.375rem 0.875rem;"
+        aria-label="Masuk ke panel admin"
+      >Admin</a>
       <button
         class="btn-icon"
         id="dark-mode-toggle"
