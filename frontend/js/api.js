@@ -46,8 +46,12 @@ async function apiFetch(path, options = {}) {
   // Handle 401 Unauthorized — redirect ke halaman login admin HANYA untuk halaman admin
   if (response.status === 401) {
     localStorage.removeItem('token');
-    // Hanya redirect jika sedang di halaman admin
-    if (window.location.pathname.includes('/admin/')) {
+    // Hanya redirect jika sedang di halaman admin DAN bukan halaman login itu sendiri
+    const isAdminPage = window.location.pathname.includes('/admin/');
+    const isLoginPage = window.location.pathname.includes('/admin/login');
+    if (isAdminPage && !isLoginPage) {
+      // Set flag agar halaman login tidak redirect balik ke dashboard
+      sessionStorage.setItem('justLoggedOut', 'true');
       window.location.href = '/admin/login.html';
       return new Promise(() => {});
     }

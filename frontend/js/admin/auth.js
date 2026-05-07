@@ -9,9 +9,16 @@
 /**
  * Jika token sudah ada di localStorage, langsung redirect ke dashboard.
  * Dipanggil sebelum DOMContentLoaded agar tidak ada flash halaman login.
+ * Hanya redirect jika token ada DAN kita tidak sedang dalam proses logout.
  */
 (function checkExistingSession() {
   const token = localStorage.getItem('token');
+  // Cek flag logout untuk mencegah redirect loop
+  const justLoggedOut = sessionStorage.getItem('justLoggedOut');
+  if (justLoggedOut) {
+    sessionStorage.removeItem('justLoggedOut');
+    return;
+  }
   if (token) {
     window.location.href = '/admin/dashboard.html';
   }
@@ -110,5 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function logout() {
   localStorage.removeItem('token');
+  // Set flag agar halaman login tidak redirect balik ke dashboard
+  sessionStorage.setItem('justLoggedOut', 'true');
   window.location.href = '/admin/login.html';
 }

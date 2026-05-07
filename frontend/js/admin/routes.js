@@ -17,6 +17,7 @@
 
 function adminLogout() {
   localStorage.removeItem('token');
+  sessionStorage.setItem('justLoggedOut', 'true');
   window.location.href = '/admin/login.html';
 }
 
