@@ -13,7 +13,6 @@ const API_BASE = '';
  *  - Menambahkan base URL backend
  *  - Menambahkan header Content-Type: application/json (kecuali FormData)
  *  - Menambahkan header Authorization: Bearer <token> dari localStorage
- *  - Meng-handle respons 401 dengan redirect ke /admin/login.html
  *  - Mengembalikan parsed JSON
  *  - Melempar error dengan body respons jika status tidak ok
  *
@@ -24,15 +23,12 @@ const API_BASE = '';
 async function apiFetch(path, options = {}) {
   const url = `${API_BASE}${path}`;
 
-  // Bangun headers
   const headers = { ...(options.headers || {}) };
 
-  // Tambahkan Content-Type JSON kecuali body adalah FormData
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 
-  // Tambahkan Authorization header jika token tersedia di localStorage
   const token = localStorage.getItem('token');
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -43,22 +39,7 @@ async function apiFetch(path, options = {}) {
     headers,
   });
 
-  // Handle 401 Unauthorized — redirect ke halaman login admin HANYA untuk halaman admin
-  if (response.status === 401) {
-    localStorage.removeItem('token');
-    // Hanya redirect jika sedang di halaman admin DAN bukan halaman login itu sendiri
-    const isAdminPage = window.location.pathname.includes('/admin/');
-    const isLoginPage = window.location.pathname.includes('/admin/login');
-    if (isAdminPage && !isLoginPage) {
-      // Set flag agar halaman login tidak redirect balik ke dashboard
-      sessionStorage.setItem('justLoggedOut', 'true');
-      window.location.href = '/admin/login.html';
-      return new Promise(() => {});
-    }
-    throw new Error('Unauthorized');
-  }
-
-  // Parse body sebagai JSON (atau teks jika bukan JSON)
+  // Parse body
   let data;
   const contentType = response.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
@@ -67,7 +48,6 @@ async function apiFetch(path, options = {}) {
     data = await response.text();
   }
 
-  // Lempar error jika respons tidak ok (4xx / 5xx)
   if (!response.ok) {
     const error = new Error(
       (data && data.error) ||

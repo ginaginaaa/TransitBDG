@@ -6,14 +6,10 @@
 
 /* ── Auth Guard ───────────────────────────────────────────── */
 
-/**
- * Periksa keberadaan JWT token. Jika tidak ada, redirect ke login.
- * Dipanggil segera sebelum DOMContentLoaded.
- */
 (function checkAuth() {
   const token = localStorage.getItem('token');
   if (!token) {
-    window.location.href = '/admin/login.html';
+    window.location.replace('/admin/login.html');
   }
 })();
 

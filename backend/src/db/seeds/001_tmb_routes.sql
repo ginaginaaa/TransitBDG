@@ -194,11 +194,10 @@ WHERE NOT EXISTS (
 -- Password : admin123
 -- Hash     : bcrypt, salt rounds 10
 -- ============================================================
--- PENTING: Ganti password_hash ini sebelum deploy ke production!
 
 INSERT INTO admins (username, password_hash)
 VALUES (
     'admin',
-    '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
+    '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
 )
-ON CONFLICT (username) DO NOTHING;
+ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
