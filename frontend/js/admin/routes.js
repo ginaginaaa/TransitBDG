@@ -600,7 +600,7 @@ async function saveStop() {
 
   try {
     if (editingStopId) {
-      await apiFetch(`/api/v1/admin/stops/${editingStopId}`, {
+      await apiFetch(`/api/v1/admin/routes/stops/${editingStopId}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
@@ -642,7 +642,7 @@ async function deleteStop(stopId, stopName, routeId) {
   if (!confirmed) return;
 
   try {
-    await apiFetch(`/api/v1/admin/stops/${stopId}`, { method: 'DELETE' });
+    await apiFetch(`/api/v1/admin/routes/stops/${stopId}`, { method: 'DELETE' });
     showToast(`Halte "${stopName}" berhasil dihapus.`, 'success');
     await fetchAndRenderStops(routeId);
   } catch (err) {

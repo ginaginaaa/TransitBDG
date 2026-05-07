@@ -386,7 +386,7 @@ async function exportCsv() {
   try {
     const token = localStorage.getItem('token');
     const response = await fetch(
-      `${window.API_BASE || 'http://localhost:3000'}/api/v1/admin/reports/export/csv${query}`,
+      `/api/v1/admin/reports/export/csv${query}`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }

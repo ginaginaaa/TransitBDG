@@ -43,12 +43,15 @@ async function apiFetch(path, options = {}) {
     headers,
   });
 
-  // Handle 401 Unauthorized — redirect ke halaman login admin
+  // Handle 401 Unauthorized — redirect ke halaman login admin HANYA untuk halaman admin
   if (response.status === 401) {
     localStorage.removeItem('token');
-    window.location.href = '/admin/login.html';
-    // Kembalikan promise yang tidak pernah resolve agar kode pemanggil tidak lanjut
-    return new Promise(() => {});
+    // Hanya redirect jika sedang di halaman admin
+    if (window.location.pathname.includes('/admin/')) {
+      window.location.href = '/admin/login.html';
+      return new Promise(() => {});
+    }
+    throw new Error('Unauthorized');
   }
 
   // Parse body sebagai JSON (atau teks jika bukan JSON)
